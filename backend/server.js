@@ -169,6 +169,105 @@ db.run(`CREATE TABLE IF NOT EXISTS users (
   permission TEXT
 )`);
 
+db.run(`CREATE TABLE IF NOT EXISTS prescriptions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  drug_name TEXT,
+  patient_name TEXT,
+  quantity INT(255)
+)`);
+
+// Debugging routes
+app.get("/prescriptions", authenticateJWT, authorizeAdmin, (req, res) => {
+  db.all(
+    "SELECT id, drug_name, patient_name, quantity FROM prescriptions",
+    [],
+    (err, rows) => {
+      if (err) {
+        res.status(500).send("Error retrieving prescriptions");
+      } else {
+        res.json(rows);
+      }
+    }
+  );
+});
+
+app.post("/prescriptions", authenticateJWT, authorizeAdmin, async (req, res) => {
+  const { drug_name, patient_name, quantity } = req.body;
+
+  if (!drug_name || !patient_name || !quantity) {
+    return res.status(400).json({ error: "Drug name, Patient name, and Quantity are required" });
+  }
+
+  // Insert the new user with hashed password into the database
+  db.run(
+    `INSERT INTO prescriptions (drug_name, patient_name, quantity) VALUES (?, ?, ?)`,
+    [drug_name, patient_name, quantity],
+    function (err) {
+      if (err) {
+        return res.status(500).json({ error: "Error adding prescription to database" });
+      }
+      res.status(201).json({
+        id: this.lastID,
+        drug_name,
+        patient_name,
+        quantity
+      });
+    }
+  );
+});
+
+app.post("/prescriptions/decrease", authenticateJWT, authorizeAdmin, (req, res) => {
+  const { id, amount } = req.body;
+
+  if (!id || !amount) {
+    return res.status(400).json({ error: "Prescription ID and amount are required" });
+  }
+
+  // Get the current quantity for the prescription
+  db.get(
+    "SELECT id, drug_name, patient_name, quantity FROM prescriptions WHERE id = ?",
+    [id],
+    (err, prescription) => {
+      if (err) {
+        return res.status(500).json({ error: "Error fetching prescription" });
+      }
+
+      if (!prescription) {
+        return res.status(404).json({ error: "Prescription not found" });
+      }
+
+      // Check if quantity is sufficient
+      if (prescription.quantity < amount) {
+        return res
+          .status(400)
+          .json({ error: "Insufficient quantity to decrease by the specified amount" });
+      }
+
+      // Decrease the quantity
+      const newQuantity = prescription.quantity - amount;
+      db.run(
+        "UPDATE prescriptions SET quantity = ? WHERE id = ?",
+        [newQuantity, id],
+        (updateErr) => {
+          if (updateErr) {
+            return res.status(500).json({ error: "Error updating prescription quantity" });
+          }
+
+          res.json({
+            message: "Quantity decreased successfully",
+            prescription: {
+              id: prescription.id,
+              drug_name: prescription.drug_name,
+              patient_name: prescription.patient_name,
+              quantity: newQuantity,
+            },
+          });
+        }
+      );
+    }
+  );
+});
+
 
 // Debugging routes
 app.get("/users", (req, res) => {
