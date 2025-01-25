@@ -2,7 +2,7 @@
 import { useState } from "react";
 
 export default function Register() {
-  const [name, setName] = useState("");
+  const [username, setName] = useState("");
   const [password, setPassword] = useState("");
   const [permission, setPermission] = useState(""); // New parameter
   const [response, setResponse] = useState("");
@@ -14,9 +14,9 @@ export default function Register() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ name, password, permission }),
+        body: JSON.stringify({ username, password, permission }),
       });
-      console.log(JSON.stringify({ name, password, permission }));
+      console.log(JSON.stringify({ username, password, permission }));
 
       if (!res.ok) {
         throw new Error("Registration failed");
@@ -37,7 +37,7 @@ export default function Register() {
         <input
           type="text"
           placeholder="Username"
-          value={name}
+          value={username}
           onChange={(e) => setName(e.target.value)}
           className="w-full px-4 py-2 mb-4 border rounded-lg focus:outline-none"
         />

@@ -2,13 +2,13 @@
 Register User:
 
 ```m
-curl -H "Content-Type: application/json"   -X POST   -d '{"name":"admin","password":"password", "permission":"admin"}'   http://localhost:5000/register
+curl -H "Content-Type: application/json"   -X POST   -d '{"username":"admin","password":"password", "permission":"admin"}'   http://localhost:5000/register
 ```
 
 Login:
 
 ```m
-curl -H "Content-Type: application/json"   -X POST   -d '{"name":"admin","password":"password"}'   http://localhost:5000/login
+curl -H "Content-Type: application/json"   -X POST   -d '{"username":"admin","password":"password"}'   http://localhost:5000/login
 ```
 
 Access Admin:
@@ -30,7 +30,7 @@ http://localhost:5000/prescriptions
 View Prescriptions:
 
 ```m
-curl -H 'Accept: application/json' -H "Authorization: Bearer ${TOKEN}" http://localhost:5000/prescriptions
+curl -H 'Accept: application/json' -H "Authorization: Bearer ${TOKEN}" http://localhost:5000/prescriptions-admin
 ```
 
 Decrease Prescription:
