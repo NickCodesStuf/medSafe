@@ -3,6 +3,8 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import sqlite3 from "sqlite3";
 import path from "path";
+import cors from "cors";
+
 
 const app = express();
 const PORT = 5000;
@@ -10,6 +12,7 @@ const PORT = 5000;
 const JWT_SECRET = "key";
 
 app.use(express.json());
+app.use(cors());
 
 // Register Route (POST /register)
 app.post("/register", async (req, res) => {
