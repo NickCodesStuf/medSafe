@@ -33,7 +33,11 @@ export default function LoginRegister() {
       setResponse(result.message || `${action} successful`)
     } catch (error) {
       console.error("Error:", error)
-      setResponse(error.message || `${action} failed`)
+      if (error instanceof Error) {
+        setResponse(error.message || `${action} failed`)
+      } else {
+        setResponse(`${action} failed`)
+      }
     }
   }
 
