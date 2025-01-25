@@ -1,19 +1,11 @@
 "use client"
 
-<<<<<<< HEAD
 import React, { useState } from "react"
 import { User, Shield, Lock } from "lucide-react"
-=======
-export default function Register() {
-  const [username, setName] = useState("");
-  const [password, setPassword] = useState("");
-  const [permission, setPermission] = useState(""); // New parameter
-  const [response, setResponse] = useState("");
->>>>>>> 591c43d2c28726ec91a84234c5ce3b5dbb2a4359
 
 export default function LoginRegister() {
   const [action, setAction] = useState("Login")
-  const [name, setName] = useState("")
+  const [username, setUsername] = useState("")
   const [permission, setPermission] = useState("")
   const [password, setPassword] = useState("")
   const [response, setResponse] = useState("")
@@ -21,36 +13,35 @@ export default function LoginRegister() {
   const handleSubmit = async () => {
     try {
       const endpoint = action === "Login" ? "/login" : "/register"
-      const body = JSON.stringify({ name, password, permission })
+      const body =
+        action === "Login" ? JSON.stringify({ username, password }) : JSON.stringify({ username, password, permission })
 
       const res = await fetch(`http://localhost:5000${endpoint}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-<<<<<<< HEAD
         body: body,
       })
-=======
-        body: JSON.stringify({ username, password, permission }),
-      });
-      console.log(JSON.stringify({ username, password, permission }));
->>>>>>> 591c43d2c28726ec91a84234c5ce3b5dbb2a4359
 
       if (!res.ok) {
-        throw new Error(`${action} failed`)
+        const errorData = await res.json()
+        throw new Error(errorData.error || `${action} failed`)
       }
 
       const result = await res.json()
       setResponse(result.message || `${action} successful`)
     } catch (error) {
       console.error("Error:", error)
-      setResponse(`${action} failed`)
+      if (error instanceof Error) {
+        setResponse(error.message || `${action} failed`)
+      } else {
+        setResponse(`${action} failed`)
+      }
     }
   }
 
   return (
-<<<<<<< HEAD
     <div className="container">
       <style jsx>{`
         .container{
@@ -91,8 +82,8 @@ export default function LoginRegister() {
         .input{
           display: flex;
           align-items: center;
+          padding-left: 20px;
           margin: auto;
-          padding-left: 23px;
           width: 480px;
           height: 80px;
           background: #eaeaea;
@@ -153,46 +144,11 @@ export default function LoginRegister() {
       <div className="header">
         <div className="text">{action}</div>
         <div className="underline"></div>
-=======
-    <div className="flex flex-col items-center justify-center h-screen bg-gray-100">
-      <div className="bg-white shadow-lg rounded-lg p-6 w-80">
-        <h2 className="text-xl font-bold mb-4 text-center">Register</h2>
-        <input
-          type="text"
-          placeholder="Username"
-          value={username}
-          onChange={(e) => setName(e.target.value)}
-          className="w-full px-4 py-2 mb-4 border rounded-lg focus:outline-none"
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="w-full px-4 py-2 mb-4 border rounded-lg focus:outline-none"
-        />
-        <input
-          type="text"
-          placeholder="Permission (e.g., admin, user)"
-          value={permission}
-          onChange={(e) => setPermission(e.target.value)}
-          className="w-full px-4 py-2 mb-4 border rounded-lg focus:outline-none"
-        />
-        <button
-          onClick={handleRegister}
-          className="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition"
-        >
-          Register
-        </button>
-        {response && (
-          <p className="mt-4 text-center text-sm text-gray-600">{response}</p>
-        )}
->>>>>>> 591c43d2c28726ec91a84234c5ce3b5dbb2a4359
       </div>
       <div className="inputs">
         <div className="input">
           <User size={24} />
-          <input type="text" placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} />
+          <input type="text" placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)} />
         </div>
         {action === "Sign Up" && (
           <div className="input">
@@ -234,7 +190,7 @@ export default function LoginRegister() {
           Sign Up
         </div>
         <div
-          className={action === "Login" ? "submit" : "submit gray"} 
+          className={action === "Login" ? "submit" : "submit gray"}
           onClick={() => {
             if (action === "Login") {
               handleSubmit()

@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react"
 import { Bell, ChevronDown, Home, Pill, DollarSign, Users, Phone } from "lucide-react"
 import { Card, CardHeader, CardTitle, CardContent } from "../../components/ui/card"
 import { Button } from "../../components/ui/button" 
-import "./page.css"
+
 
 const Sidebar = ({
   activeSection,
@@ -19,14 +19,14 @@ const Sidebar = ({
   ]
 
   return (
-    <div className="w-64 bg-gray-800 text-white h-screen p-4 fixed left-0 top-0 bottom-0">
+    <div className="w-64 bg-white-800 text-gray h-screen p-4 fixed left-0 top-0 bottom-0">
       <h1 className="text-2xl font-bold mb-8">PatientCare</h1>
       <nav>
         {menuItems.map((item) => (
           <button
             key={item.name}
             className={`flex items-center w-full p-2 rounded-lg mb-2 ${
-              activeSection === item.name ? "bg-blue-600" : "hover:bg-gray-700"
+              activeSection === item.name ? "bg-blue-600" : "hover:bg-blue-700"
             }`}
             onClick={() => setActiveSection(item.name)}
           >
@@ -46,7 +46,7 @@ const Header = () => (
       <Bell className="mr-4" />
       <div className="flex items-center">
         <img src="/placeholder.svg?height=32&width=32" alt="User" className="w-8 h-8 rounded-full mr-2" />
-        <span className="mr-2">John Doe</span>
+        <span className="mr-2">user</span>
         <ChevronDown />
       </div>
     </div>
