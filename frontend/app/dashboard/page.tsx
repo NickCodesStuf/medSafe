@@ -1,11 +1,10 @@
 "use client"
 
-import './page.css';
 import { useState, useRef, useEffect } from "react"
-import { Bell, ChevronDown, Home, Pill, DollarSign, Users, Phone, ClipboardList } from "lucide-react"
+import { Bell, ChevronDown, Home, Pill, DollarSign, Users, Phone } from "lucide-react"
 import { Card, CardHeader, CardTitle, CardContent } from "../../components/ui/card"
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart as RePieChart, Pie, Cell, Legend } from "recharts"  
-import { Button } from "../../components/ui/button"
+import { Button } from "../../components/ui/button" 
+import "./page.css"
 
 const Sidebar = ({
   activeSection,
@@ -20,7 +19,7 @@ const Sidebar = ({
   ]
 
   return (
-    <div className="w-64 bg-gray-800 text-white h-screen p-4 fixed">
+    <div className="w-64 bg-gray-800 text-white h-screen p-4 fixed left-0 top-0 bottom-0">
       <h1 className="text-2xl font-bold mb-8">PatientCare</h1>
       <nav>
         {menuItems.map((item) => (
@@ -93,14 +92,18 @@ const DashboardContent = ({ activeSection, sectionRefs }: { activeSection: strin
           <CardContent>
             <div className="text-2xl font-bold">5</div>
             <p className="text-xs text-muted-foreground">2 new this month</p>
-            <ResponsiveContainer width="100%" height={200}>
-              <LineChart data={medicationData}>
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Line type="monotone" dataKey="prescriptions" stroke="#8884d8" />
-              </LineChart>
-            </ResponsiveContainer>
+            <div className="line-chart">
+              {medicationData.map((data, index) => (
+                <div
+                  key={data.name}
+                  className="line"
+                  style={{
+                    transform: `translate(${index * 25}%, ${100 - data.prescriptions * 20}%) rotate(45deg)`,
+                    width: "25%",
+                  }}
+                />
+              ))}
+            </div>
           </CardContent>
         </Card>
         <Card>
@@ -111,14 +114,16 @@ const DashboardContent = ({ activeSection, sectionRefs }: { activeSection: strin
           <CardContent>
             <div className="text-2xl font-bold">$250</div>
             <p className="text-xs text-muted-foreground">Last payment on May 15</p>
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={paymentData}>
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="amount" fill="#82ca9d" />
-              </BarChart>
-            </ResponsiveContainer>
+            <div className="chart">
+              {paymentData.map((data) => (
+                <div
+                  key={data.name}
+                  className="bar"
+                  style={{ height: `${data.amount / 3}%` }}
+                  title={`${data.name}: $${data.amount}`}
+                />
+              ))}
+            </div>
           </CardContent>
         </Card>
         <Card>
@@ -129,25 +134,17 @@ const DashboardContent = ({ activeSection, sectionRefs }: { activeSection: strin
           <CardContent>
             <div className="text-2xl font-bold">9</div>
             <p className="text-xs text-muted-foreground">Across 5 providers</p>
-            <ResponsiveContainer width="100%" height={200}>
-              <RePieChart>
-                <Pie
-                  data={providerData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="visits"
-                >
-                  {providerData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend />
-              </RePieChart>
-            </ResponsiveContainer>
+            <div className="flex justify-center">
+              <div className="pie-chart" />
+            </div>
+            <div className="legend">
+              {providerData.map((data, index) => (
+                <div key={data.name} className="legend-item">
+                  <div className="legend-color" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
+                  <span>{data.name}</span>
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -311,7 +308,7 @@ export default function PatientDashboard() {
     if (sectionRef && sectionRef.current) {
       sectionRef.current.scrollIntoView({ behavior: "smooth" })
     }
-  }, [activeSection, sectionRefs]) // Added sectionRefs to dependencies
+  }, [activeSection])
 
   return (
     <div className="flex bg-gray-100 min-h-screen">
