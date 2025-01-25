@@ -1,5 +1,7 @@
 "use client";
+// pages/login.js
 import { useState } from "react";
+import Cookies from "js-cookie";
 
 export default function Login() {
   const [username, setUsername] = useState("");
@@ -13,13 +15,15 @@ export default function Login() {
         headers: {
           "Content-Type": "application/json",
         },
-        credentials: "include", // Include cookies in the request
         body: JSON.stringify({ username, password }),
       });
 
       const result = await res.json();
+
       if (res.ok) {
-        setMessage(result.message);
+        // Store the JWT token in a cookie
+        Cookies.set("token", result.token, { expires: 1, secure: false }); // Expires in 1 day
+        setMessage(`Welcome, ${result.user.username}`);
       } else {
         setMessage(result.message || "Login failed");
       }
