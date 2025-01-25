@@ -16,15 +16,15 @@ app.use(cors());
 
 // Register Route (POST /register)
 app.post("/register", async (req, res) => {
-  const { name, password, permission } = req.body;
+  const { username, password, permission } = req.body;
 
   // Check if name and password are provided
-  if (!name || !password) {
+  if (!username || !password) {
     return res.status(400).json({ error: "Name and password are required" });
   }
 
   // Check if the username already exists in the database
-  db.get("SELECT * FROM users WHERE name = ?", [name], (err, user) => {
+  db.get("SELECT * FROM users WHERE username = ?", [username], (err, user) => {
     if (err) {
       return res
         .status(500)
@@ -48,8 +48,8 @@ app.post("/register", async (req, res) => {
 
         // Insert the new user with hashed password into the database
         db.run(
-          `INSERT INTO users (name, passwordHash, permission) VALUES (?, ?, ?)`,
-          [name, passwordHash, permission],
+          `INSERT INTO users (username, passwordHash, permission) VALUES (?, ?, ?)`,
+          [username, passwordHash, permission],
           function (err) {
             if (err) {
               return res
@@ -59,7 +59,7 @@ app.post("/register", async (req, res) => {
             // Respond with user information (including id)
             res.status(201).json({
               id: this.lastID,
-              name,
+              name: username,
             });
           }
         );
@@ -70,15 +70,15 @@ app.post("/register", async (req, res) => {
 
 // Login Route (POST /login)
 app.post("/login", async (req, res) => {
-  const { name, password } = req.body;
+  const { username, password } = req.body;
 
   // Check if name and password are provided
-  if (!name || !password) {
+  if (!username || !password) {
     return res.status(400).json({ error: "Name and password are required" });
   }
 
   // Get the user from the database by name
-  db.get("SELECT * FROM users WHERE name = ?", [name], async (err, user) => {
+  db.get("SELECT * FROM users WHERE username = ?", [username], async (err, user) => {
     if (err) {
       return res
         .status(500)
@@ -100,7 +100,7 @@ app.post("/login", async (req, res) => {
     // Create a JWT payload
     const payload = {
       id: user.id,
-      name: user.name,
+      username: user.username,
       permission: user.permission,
     };
 
@@ -110,17 +110,17 @@ app.post("/login", async (req, res) => {
     // Successful login
     res.json({
       message: "Login successful",
-      user: { id: user.id, name: user.name, permission: user.permission },
+      user: { id: user.id, username: user.username, permission: user.permission },
       token,
     });
   });
 });
 
 function authorizeAdmin(req, res, next) {
-  const { name } = req.user;
+  const { username } = req.user;
 
   // Fetch user from the database to check their permission
-  db.get("SELECT permission FROM users WHERE name = ?", [name], (err, row) => {
+  db.get("SELECT permission FROM users WHERE username = ?", [username], (err, row) => {
     if (err) {
       return res.status(500).json({ error: "Database error" });
     }
@@ -167,7 +167,7 @@ const db = new sqlite3.Database(path.resolve("./database.db"), (err) => {
 // Create a table for users
 db.run(`CREATE TABLE IF NOT EXISTS users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name TEXT,
+  username TEXT,
   passwordHash TEXT,
   permission TEXT
 )`);
@@ -179,8 +179,7 @@ db.run(`CREATE TABLE IF NOT EXISTS prescriptions (
   quantity INT(255)
 )`);
 
-// Debugging routes
-app.get("/prescriptions", authenticateJWT, authorizeAdmin, (req, res) => {
+app.get("/prescriptions", (req, res) => {
   db.all(
     "SELECT id, drug_name, patient_name, quantity FROM prescriptions",
     [],
@@ -194,7 +193,22 @@ app.get("/prescriptions", authenticateJWT, authorizeAdmin, (req, res) => {
   );
 });
 
-app.post("/prescriptions", authenticateJWT, authorizeAdmin, async (req, res) => {
+// Debugging routes
+app.get("/prescriptions-admin", authenticateJWT, authorizeAdmin, (req, res) => {
+  db.all(
+    "SELECT id, drug_name, patient_name, quantity FROM prescriptions",
+    [],
+    (err, rows) => {
+      if (err) {
+        res.status(500).send("Error retrieving prescriptions");
+      } else {
+        res.json(rows);
+      }
+    }
+  );
+});
+
+app.post("/prescriptions-admin", authenticateJWT, authorizeAdmin, async (req, res) => {
   const { drug_name, patient_name, quantity } = req.body;
 
   if (!drug_name || !patient_name || !quantity) {
@@ -275,7 +289,7 @@ app.post("/prescriptions/decrease", authenticateJWT, authorizeAdmin, (req, res) 
 // Debugging routes
 app.get("/users", (req, res) => {
   db.all(
-    "SELECT id, name, passwordHash, permission FROM users",
+    "SELECT id, username, passwordHash, permission FROM users",
     [],
     (err, rows) => {
       if (err) {
@@ -300,7 +314,7 @@ app.post("/users", async (req, res) => {
 
   // Insert the new user with hashed password into the database
   db.run(
-    `INSERT INTO users (name, passwordHash, permission) VALUES (?, ?, ?)`,
+    `INSERT INTO users (username, passwordHash, permission) VALUES (?, ?, ?)`,
     [name, passwordHash, permission],
     function (err) {
       if (err) {
