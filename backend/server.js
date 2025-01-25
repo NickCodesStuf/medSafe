@@ -110,17 +110,17 @@ app.post("/login", async (req, res) => {
     // Successful login
     res.json({
       message: "Login successful",
-      user: { id: user.id, name: user.username, permission: user.permission },
+      user: { id: user.id, username: user.username, permission: user.permission },
       token,
     });
   });
 });
 
 function authorizeAdmin(req, res, next) {
-  const { name } = req.user;
+  const { username } = req.user;
 
   // Fetch user from the database to check their permission
-  db.get("SELECT permission FROM users WHERE username = ?", [name], (err, row) => {
+  db.get("SELECT permission FROM users WHERE username = ?", [username], (err, row) => {
     if (err) {
       return res.status(500).json({ error: "Database error" });
     }
