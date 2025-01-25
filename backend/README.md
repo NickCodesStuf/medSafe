@@ -24,7 +24,7 @@ curl -X POST \
 -H 'Content-Type: application/json' \
 -H "Authorization: Bearer ${TOKEN}" \
 -d '{"drug_name":"ozempic", "patient_name":"bob", "quantity":5}' \
-http://localhost:5000/prescriptions
+http://localhost:5000/prescriptions-admin
 ```
 
 View Prescriptions:
