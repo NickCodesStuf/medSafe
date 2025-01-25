@@ -8,7 +8,7 @@ curl -H "Content-Type: application/json"   -X POST   -d '{"name":"admin","passwo
 Login:
 
 ```m
-curl -H "Content-Type: application/json"   -X POST   -d '{"name":"admin","password":"password", "permission":"admin"}'   http://localhost:5000/login
+curl -H "Content-Type: application/json"   -X POST   -d '{"name":"admin","password":"password"}'   http://localhost:5000/login
 ```
 
 Access Admin:
