@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 import { SerialPort } from 'serialport';
 import { ReadlineParser } from '@serialport/parser-readline';
 import readline from 'readline';
