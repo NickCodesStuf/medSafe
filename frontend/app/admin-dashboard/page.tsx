@@ -101,7 +101,9 @@ const Page = () => {
   };
 
   const [prescriptionID, setPrescriptionID] = useState("");
-  const [amount, setAmount] = useState(0);
+  const [startDatetime, setStartDatetime] = useState("");
+  const [frequency, setFrequency] = useState("");
+  const [dispenseQuantity, setDispenseQuantity] = useState(0);
   const handleDispense = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -114,6 +116,10 @@ const Page = () => {
     setLoading(true);
     setMessage("Sending data...");
 
+    const formatted_start = startDatetime
+      .toString()
+      .replace(/[^0-9]/g, "")
+      .slice(2);
     try {
       const res = await fetch("http://localhost:5000/prescriptions/decrease", {
         method: "POST",
@@ -123,9 +129,23 @@ const Page = () => {
         },
         body: JSON.stringify({
           id: prescriptionID,
-          amount: amount,
+          amount: dispenseQuantity,
         }),
       });
+
+      const res2 = await fetch("http://localhost:5000/api/serial", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json", // Content-Type header for JSON payload
+        },
+        body: JSON.stringify({
+          start_datetime: formatted_start,
+          quantity: dispenseQuantity,
+          frequency: frequency,
+        }),
+      });
+
+      const data2 = await res2.text();
 
       const data = await res.text(); // Use .text() to get raw response as string
 
@@ -136,7 +156,7 @@ const Page = () => {
       } else {
         // If the status code is not 200, show a fail message
         setMessage("Failed to decrease prescription");
-        setRawResponse(data); // Show the raw error message
+        setRawResponse(data + data2); // Show the raw error message
       }
     } catch (error) {
       console.error("Error submitting data:", error);
@@ -219,7 +239,6 @@ const Page = () => {
         <h1>{message}</h1>
 
         <form onSubmit={handleDispense} className="space-y-4">
-
           <div>
             <label htmlFor="prescriptionID">Prescription ID:</label>
             <input
@@ -227,25 +246,47 @@ const Page = () => {
               type="text"
               value={prescriptionID}
               onChange={(e) => setPrescriptionID(e.target.value)}
-              className="border p-2"
+              className="border p-2 w-full"
             />
           </div>
 
           <div>
-            <label htmlFor="amount">Dispense amount:</label>
+            <label htmlFor="start_datetime">Start Datetime:</label>
             <input
-              id="amount"
+              id="start_datetime"
+              type="datetime-local"
+              value={startDatetime}
+              onChange={(e) => setStartDatetime(e.target.value)}
+              className="border p-2 w-full"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="frequency">Frequency:</label>
+            <input
+              id="frequency"
+              type="text"
+              value={frequency}
+              onChange={(e) => setFrequency(e.target.value)}
+              className="border p-2 w-full"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="dispenseQuantity">Dispense Quantity:</label>
+            <input
+              id="dispenseQuantity"
               type="number"
-              value={amount}
-              onChange={(e) => setAmount(Number(e.target.value))}
-              className="border p-2"
+              value={dispenseQuantity}
+              onChange={(e) => setDispenseQuantity(Number(e.target.value))}
+              className="border p-2 w-full"
             />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="bg-blue-500 text-white p-2 rounded"
+            className="bg-blue-500 text-white p-2 rounded w-full"
           >
             {loading ? "Submitting..." : "Submit Dispense"}
           </button>
@@ -253,7 +294,7 @@ const Page = () => {
 
         <div>
           <pre className="bg-gray-100 p-4 rounded-lg">{rawResponse}</pre>{" "}
-          {/* Display raw response */}  
+          {/* Display raw response */}
         </div>
       </div>
     </div>

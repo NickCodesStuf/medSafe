@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 import sqlite3 from "sqlite3";
 import path from "path";
 import cors from "cors";
-
+import {connect} from "./serialHelper.js"
 
 const app = express();
 const PORT = 5000;
@@ -13,6 +13,39 @@ const JWT_SECRET = "key";
 
 app.use(express.json());
 app.use(cors());
+
+
+app.post('/api/serial', async (req, res) => {
+  const {start_datetime, quantity, frequency} = req.body;
+  
+  // Convert quantity and frequency to numbers
+  const quantityNumber = Number(quantity);
+  const startNumber = Number(start_datetime);
+  const frequencyNumber = Number(frequency);
+  
+  if (isNaN(startNumber)) {
+    return res.status(400).json({ message: 'Start must be a valid number.' });
+  }
+  
+  if (isNaN(quantityNumber)) {
+    return res.status(400).json({ message: 'Quantity must be a valid number.' });
+  }
+  
+
+  if (isNaN(frequencyNumber)) {
+    return res.status(400).json({ message: 'Frequency must be a valid number.' });
+  }
+  console.log()
+
+  try {
+    // Call the serial function to handle serial communication
+    await connect(start_datetime, quantity, frequency);
+    res.status(200).json({ message: 'Serial communication triggered successfully.' });
+  } catch (error) {
+    console.error('Error in serial communication:', error);
+    res.status(500).json({ message: 'Error triggering serial communication.' });
+  }
+});
 
 // Register Route (POST /register)
 app.post("/register", async (req, res) => {
