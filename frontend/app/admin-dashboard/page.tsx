@@ -1,263 +1,351 @@
-"use client";
+"use client"
 
-import { useEffect, useState } from "react";
-import Cookies from "js-cookie";
+import { useEffect, useState } from "react"
+import Cookies from "js-cookie"
+import { Users, FileText, Clock, CheckCircle } from "lucide-react"
+import { Sidebar } from "../../components/ui/sidebar"
+import { Header } from "../../components/Header"
+import { StatsCard } from "../../components/ui/stats-card"
+import { Button } from "../../components/ui/button"
+import { Input } from "../../components/ui/input"
+import { Label } from "../../components/ui/label"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tab"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/table"
 
-const Page = () => {
-  const [message, setMessage] = useState("");
-  const [rawResponse, setRawResponse] = useState<string>(""); // Store the raw response as string
-  const [loading, setLoading] = useState(true);
+export default function Dashboard() {
+  const [message, setMessage] = useState("")
+  const [prescriptions, setPrescriptions] = useState<Prescription[]>([])
+  const [loading, setLoading] = useState(true)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+
+  // Form states
+  const [drugName, setDrugName] = useState("")
+  const [patientName, setPatientName] = useState("")
+  const [quantity, setQuantity] = useState(0)
+  const [prescriptionID, setPrescriptionID] = useState("")
+  const [amount, setAmount] = useState(0)
+  const [dispenseInterval, setDispenseInterval] = useState("")
 
   useEffect(() => {
-    const token = Cookies.get("token");
-
-    if (!token) {
-      setMessage("You are not logged in.");
-      setLoading(false); // Stop loading if token is not present
-    } else {
-      setMessage("Loading data...");
-      fetchData(token);
+    const token = Cookies.get("token")
+    console.log("login token")
+    console.log(token)
+    if (token) {
+      setIsLoggedIn(true)
+      fetchStats(token)
     }
-  }, []);
+  }, [])
 
-  const fetchData = async (token: string) => {
+  useEffect(() => {
+    // Preset prescriptions
+    const presetPrescriptions: Prescription[] = [
+      { id: "23", patient_name: "John Doe", drug_name: "Medexorin", quantity: 30, status: "active" },
+      { id: "27", patient_name: "Jane Smith", drug_name: "Painolol", quantity: 45, status: "active" },
+      { id: "39", patient_name: "Alice Johnson", drug_name: "Oxytocin", quantity: 30, status: "completed" },
+    ]
+    setPrescriptions(presetPrescriptions)
+  }, [])
+
+  interface Prescription {
+    id: string
+    patient_name: string
+    drug_name: string
+    quantity: number
+    status: string
+  }
+
+  const fetchStats = async (token: string | undefined) => {
+    try {
+      const res = await fetch("http://localhost:5000/stats", {
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        setTotalPatients(data.totalPatients)
+        setPrescriptions(data.activePrescriptions)
+      } else {
+        setMessage("Failed to load stats")
+      }
+    } catch (error) {
+      console.error("Error:", error)
+      setMessage("An error occurred while fetching stats.")
+    }
+  }
+
+  useEffect(() => {
+    const token = Cookies.get("token")
+    fetchPrescriptions(token)
+  }, [])
+
+  const fetchPrescriptions = async (token: string | undefined) => {
     try {
       const res = await fetch("http://localhost:5000/prescriptions-admin", {
-        method: "GET",
         headers: {
-          Accept: "application/json", // Accept header for JSON response
-          Authorization: `Bearer ${token}`, // Send JWT token in Authorization header
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
         },
-      });
+      })
 
-      const data = await res.text(); // Use .text() to get raw response as string
-
-      if (res.status === 200) {
-        // If the status code is 200, it's a success
-        setRawResponse(data); // Set the raw response text
-        setMessage("Data loaded successfully!");
+      if (res.ok) {
+        const data = await res.json()
+        setDrugName(data.drugName)
+        setMessage("Data loaded successfully!")
       } else {
-        // If the status code is not 200, show a fail message
-        setMessage("Failed to fetch data");
-        setRawResponse(data); // Show the raw error message
+        setMessage("Data failed to load!")
       }
-
-      setLoading(false);
-    } catch (error) {
-      console.error("Error fetching data:", error);
-      setMessage("An error occurred while fetching data.");
-      setRawResponse("Error fetching data");
-      setLoading(false);
+    } finally {
+      setLoading(false)
     }
-  };
+  }
 
-  const [drugName, setDrugName] = useState("");
-  const [patientName, setPatientName] = useState("");
-  const [quantity, setQuantity] = useState(0);
   const handlePrescribe = async (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
+    const token = Cookies.get("token")
 
-    const token = Cookies.get("token");
-    if (!token) {
-      setMessage("You are not logged in.");
-      return;
-    }
-
-    setLoading(true);
-    setMessage("Sending data...");
-
+    setLoading(true)
     try {
       const res = await fetch("http://localhost:5000/prescriptions-admin", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json", // Content-Type header for JSON payload
-          Authorization: `Bearer ${token}`, // Send JWT token in Authorization header
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           drug_name: drugName,
           patient_name: patientName,
-          quantity,
-        }),
-      });
+          "quantity": quantity,
+          dispense_interval: dispenseInterval,
+          status: "active",
+        })
+      })
+      console.log(JSON.stringify({
+        drug_name: drugName,
+        patient_name: patientName,
+        "quantity": quantity,
+        dispense_interval: dispenseInterval,
+        status: "active",
 
-      const data = await res.text(); // Use .text() to get raw response as string
-
-      if (res.status === 200) {
-        // If the status code is 200, it's a success
-        setRawResponse(data); // Set the raw response text
-        setMessage("Prescription added successfully!");
+      }))
+      if (res.ok) {
+        const newPrescription = await res.json()
+        setPrescriptions((prevPrescriptions) => [...prevPrescriptions, newPrescription])
+        setMessage("Prescription added successfully!")
       } else {
-        // If the status code is not 200, show a fail message
-        setMessage("Failed to add prescription");
-        setRawResponse(data); // Show the raw error message
-      }
+        setMessage("Prescription failed!")      }
     } catch (error) {
-      console.error("Error submitting data:", error);
-      setMessage("An error occurred while submitting data.");
-      setRawResponse("Error submitting data");
+      console.error("Error:", error)
+      setMessage("An error occurred while submitting data.")
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
-  const [prescriptionID, setPrescriptionID] = useState("");
-  const [amount, setAmount] = useState(0);
   const handleDispense = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    const token = Cookies.get("token");
+    e.preventDefault()
+    const token = Cookies.get("token")
     if (!token) {
-      setMessage("You are not logged in.");
-      return;
+      setMessage("You are not logged in.")
+      return
     }
 
-    setLoading(true);
-    setMessage("Sending data...");
-
+    setLoading(true)
     try {
       const res = await fetch("http://localhost:5000/prescriptions/decrease", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json", // Content-Type header for JSON payload
-          Authorization: `Bearer ${token}`, // Send JWT token in Authorization header
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           id: prescriptionID,
-          amount: amount,
+          amount,
         }),
-      });
+      })
 
-      const data = await res.text(); // Use .text() to get raw response as string
-
-      if (res.status === 200) {
-        // If the status code is 200, it's a success
-        setRawResponse(data); // Set the raw response text
-        setMessage("Prescription decreased!");
+      if (res.ok) {
+        setMessage("Medication dispensed successfully!")
+        // Refresh prescriptions list
+        fetchPrescriptions(token)
+        // Reset form
+        setPrescriptionID("")
+        setAmount(0)
       } else {
-        // If the status code is not 200, show a fail message
-        setMessage("Failed to decrease prescription");
-        setRawResponse(data); // Show the raw error message
+        setMessage("Failed to dispense medication")
       }
     } catch (error) {
-      console.error("Error submitting data:", error);
-      setMessage("An error occurred while submitting data.");
-      setRawResponse("Error submitting data");
+      console.error("Error:", error)
+      setMessage("An error occurred while dispensing medication.")
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
-
-  if (loading) {
-    return <div>Loading...</div>;
   }
 
+  if (loading) {
+    return <div>Loading...</div>
+  }
+
+
   return (
-    <div className="flex items-center justify-center h-screen">
-      <div>
-        <h1>Prescription data: </h1>
-        <div>
-          <pre className="bg-gray-100 p-4 rounded-lg">{rawResponse}</pre>{" "}
-          {/* Display raw response */}
-        </div>
-        <p>{message}</p>
-      </div>
-      <div className="flex flex-col items-center justify-center h-screen space-y-6">
-        <h1>Create new prescription</h1>
-        <h1>{message}</h1>
+    <div className="flex h-screen bg-gray-50">
+      <Sidebar />
 
-        <form onSubmit={handlePrescribe} className="space-y-4">
-          <div>
-            <label htmlFor="drugName">Drug Name:</label>
-            <input
-              id="drugName"
-              type="text"
-              value={drugName}
-              onChange={(e) => setDrugName(e.target.value)}
-              className="border p-2"
-            />
-          </div>
+      <div className="flex-1 flex flex-col">
+        <Header isLoggedIn={isLoggedIn} />
 
-          <div>
-            <label htmlFor="patientName">Patient Name:</label>
-            <input
-              id="patientName"
-              type="text"
-              value={patientName}
-              onChange={(e) => setPatientName(e.target.value)}
-              className="border p-2"
-            />
-          </div>
+        <main className="flex-1 p-6">
+            {isLoggedIn && (
+            <div className="grid grid-cols-4 gap-6 mb-6">
+              <StatsCard
+              title="Total Patients"
+              value={550}
+              change={{ value: 10, timeframe: "Since last month" }}
+              icon={Users}
+              />
+              <StatsCard
+              title="Active Prescriptions"
+              value={128}
+              change={{ value: 5, timeframe: "Since last month" }}
+              icon={FileText}
+              />
+              <StatsCard
+              title="Pending Reviews"
+              value={28}
+              change={{ value: 12, timeframe: "Since last month" }}
+              icon={Clock}
+              />
+              <StatsCard
+              title="Completed Today"
+              value={15}
+              change={{ value: 8, timeframe: "Since last month" }}
+              icon={CheckCircle}
+              />
+            </div>
+            )}
 
-          <div>
-            <label htmlFor="quantity">Quantity:</label>
-            <input
-              id="quantity"
-              type="number"
-              value={quantity}
-              onChange={(e) => setQuantity(Number(e.target.value))}
-              className="border p-2"
-            />
-          </div>
+          {message && <div className="mb-6 p-4 rounded bg-blue-50 text-blue-700">{message}</div>}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="bg-blue-500 text-white p-2 rounded"
-          >
-            {loading ? "Submitting..." : "Submit Prescription"}
-          </button>
-        </form>
+          <Tabs defaultValue="prescriptions">
+            <TabsList>
+              <TabsTrigger value="prescriptions">Prescriptions</TabsTrigger>
+              <TabsTrigger value="create">Create New</TabsTrigger>
+            </TabsList>
 
-        <div>
-          <pre className="bg-gray-100 p-4 rounded-lg">{rawResponse}</pre>{" "}
-          {/* Display raw response */}
-        </div>
-      </div>
+            <TabsContent value="prescriptions">
+              <div className="rounded-lg border bg-white">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>ID</TableHead>
+                      <TableHead>Patient</TableHead>
+                      <TableHead>Drug</TableHead>
+                      <TableHead>Quantity</TableHead>
+                      <TableHead>Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {prescriptions.map((prescription) => (
+                      <TableRow key={prescription.id}>
+                        <TableCell>{prescription.id}</TableCell>
+                        <TableCell>{prescription.patient_name}</TableCell>
+                        <TableCell>{prescription.drug_name}</TableCell>
+                        <TableCell>{prescription.quantity}</TableCell>
+                        <TableCell>active</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </TabsContent>
 
-      <div className="flex flex-col items-center justify-center h-screen space-y-6">
-        <h1>Dispense prescription</h1>
-        <h1>{message}</h1>
+            <TabsContent value="create">
+              <div className="rounded-lg border bg-white p-6">
+                <form onSubmit={handlePrescribe} className="space-y-4 max-w-md">
+                  <div className="space-y-2">
+                    <Label htmlFor="drugName">Drug Name</Label>
+                    <Input id="drugName" value={drugName} onChange={(e) => setDrugName(e.target.value)} required />
+                  </div>
 
-        <form onSubmit={handleDispense} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="patientName">Patient Name</Label>
+                    <Input
+                      id="patientName"
+                      value={patientName}
+                      onChange={(e) => setPatientName(e.target.value)}
+                      required
+                    />
+                  </div>
 
-          <div>
-            <label htmlFor="prescriptionID">Prescription ID:</label>
-            <input
-              id="prescriptionID"
-              type="text"
-              value={prescriptionID}
-              onChange={(e) => setPrescriptionID(e.target.value)}
-              className="border p-2"
-            />
-          </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="quantity">Quantity</Label>
+                    <Input
+                      id="quantity"
+                      type="number"
+                      value={quantity}
+                      onChange={(e) => setQuantity(Number(e.target.value))}
+                      required
+                    />
+                  </div>
 
-          <div>
-            <label htmlFor="amount">Dispense amount:</label>
-            <input
-              id="amount"
-              type="number"
-              value={amount}
-              onChange={(e) => setAmount(Number(e.target.value))}
-              className="border p-2"
-            />
-          </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="dispenseInterval">Dispense Interval (hours)</Label>
+                    <Input
+                      id="dispenseInterval"
+                      type="text"
+                      value={dispenseInterval}
+                      onChange={(e) => setDispenseInterval(e.target.value)}
+                      placeholder="e.g. 12"
+                      required
+                    />
+                  </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="bg-blue-500 text-white p-2 rounded"
-          >
-            {loading ? "Submitting..." : "Submit Dispense"}
-          </button>
-        </form>
+                  <Button type="submit" disabled={loading}>
+                    {loading ? "Creating..." : "Create Prescription"}
+                  </Button>
+                </form>
+              </div>
+            </TabsContent>
 
-        <div>
-          <pre className="bg-gray-100 p-4 rounded-lg">{rawResponse}</pre>{" "}
-          {/* Display raw response */}  
-        </div>
+            <TabsContent value="dispense">
+              <div className="rounded-lg border bg-white p-6">
+                <form onSubmit={handleDispense} className="space-y-4 max-w-md">
+                  <div className="space-y-2">
+                    <Label htmlFor="prescriptionID">Prescription ID</Label>
+                    <Input
+                      id="prescriptionID"
+                      value={prescriptionID}
+                      onChange={(e) => setPrescriptionID(e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="amount">Amount to Dispense</Label>
+                    <Input
+                      id="amount"
+                      type="number"
+                      value={amount}
+                      onChange={(e) => setAmount(Number(e.target.value))}
+                      required
+                    />
+                  </div>
+
+                  <Button type="submit" disabled={loading}>
+                    {loading ? "Dispensing..." : "Dispense Medication"}
+                  </Button>
+                </form>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </main>
       </div>
     </div>
-  );
-};
+  )
+}
+function setTotalPatients(totalPatients: any) {
+  throw new Error("Function not implemented.")
+}
 
-export default Page;
