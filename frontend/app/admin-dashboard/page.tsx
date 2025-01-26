@@ -2,6 +2,55 @@
 
 import { useEffect, useState } from "react";
 import Cookies from "js-cookie";
+import { fetchExternalImage } from "next/dist/server/image-optimizer";
+
+interface JsonData {
+  [key: string]: any;
+}
+
+const JsonToTable: React.FC<{ rawResponse: string }> = ({ rawResponse }) => {
+  const [tableData, setTableData] = useState<JsonData[]>([]);
+
+  useEffect(() => {
+    try {
+      const parsedData = JSON.parse(rawResponse);
+      if (Array.isArray(parsedData)) {
+        setTableData(parsedData);
+      } else {
+        setTableData([parsedData]);
+      }
+    } catch (error) {
+      console.error("Error parsing JSON:", error);
+      setTableData([]);
+    }
+  }, [rawResponse]);
+
+  return (
+    <table className="table-auto border-collapse border border-gray-300">
+      <thead>
+        <tr>
+          {tableData.length > 0 &&
+            Object.keys(tableData[0]).map((key) => (
+              <th key={key} className="border border-gray-300 p-2">
+                {key}
+              </th>
+            ))}
+          </tr>
+      </thead>
+      <tbody>
+        {tableData.map((row, index) => (
+          <tr key={index}>
+            {Object.values(row).map((value, i) => (
+              <td key={i} className="border border-gray-300 p-2">
+                {value}
+              </td>
+            ))}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+};
 
 const Page = () => {
   const [message, setMessage] = useState("");
@@ -16,11 +65,11 @@ const Page = () => {
       setLoading(false); // Stop loading if token is not present
     } else {
       setMessage("Loading data...");
-      fetchData(token);
+      fetchPrescriptionData(token);
     }
   }, []);
 
-  const fetchData = async (token: string) => {
+  const fetchPrescriptionData = async (token: string) => {
     try {
       const res = await fetch("http://localhost:5000/prescriptions-admin", {
         method: "GET",
@@ -46,7 +95,7 @@ const Page = () => {
     } catch (error) {
       console.error("Error fetching data:", error);
       setMessage("An error occurred while fetching data.");
-      setRawResponse("Error fetching data");
+      // setRawResponse("Error fetching data");
       setLoading(false);
     }
   };
@@ -79,22 +128,21 @@ const Page = () => {
           quantity,
         }),
       });
-
-      const data = await res.text(); // Use .text() to get raw response as string
+      fetchPrescriptionData(token);
 
       if (res.status === 200) {
         // If the status code is 200, it's a success
-        setRawResponse(data); // Set the raw response text
+        // setRawResponse(data); // Set the raw response text
         setMessage("Prescription added successfully!");
       } else {
         // If the status code is not 200, show a fail message
         setMessage("Failed to add prescription");
-        setRawResponse(data); // Show the raw error message
+        // setRawResponse(data); // Show the raw error message
       }
     } catch (error) {
       console.error("Error submitting data:", error);
       setMessage("An error occurred while submitting data.");
-      setRawResponse("Error submitting data");
+      // setRawResponse("Error submitting data");
     } finally {
       setLoading(false);
     }
@@ -145,23 +193,20 @@ const Page = () => {
         }),
       });
 
-      const data2 = await res2.text();
-
-      const data = await res.text(); // Use .text() to get raw response as string
-
-      if (res.status === 200) {
+      fetchPrescriptionData(token);
+      if (res.status === 200 && res2.status === 200) {
         // If the status code is 200, it's a success
-        setRawResponse(data); // Set the raw response text
+        // setRawResponse(data); // Set the raw response text
         setMessage("Prescription decreased!");
       } else {
         // If the status code is not 200, show a fail message
         setMessage("Failed to decrease prescription");
-        setRawResponse(data + data2); // Show the raw error message
+        // setRawResponse(data + data2); // Show the raw error message
       }
     } catch (error) {
       console.error("Error submitting data:", error);
       setMessage("An error occurred while submitting data.");
-      setRawResponse("Error submitting data");
+      // setRawResponse("Error submitting data");
     } finally {
       setLoading(false);
     }
@@ -173,14 +218,14 @@ const Page = () => {
 
   return (
     <div className="flex items-center justify-center h-screen">
-      <div>
+      <div className="flex flex-col items-center justify-center h-screen space-y-6">
         <h1>Prescription data: </h1>
         <div>
-          <pre className="bg-gray-100 p-4 rounded-lg">{rawResponse}</pre>{" "}
-          {/* Display raw response */}
+          <JsonToTable rawResponse={rawResponse}/>
         </div>
         <p>{message}</p>
       </div>
+
       <div className="flex flex-col items-center justify-center h-screen space-y-6">
         <h1>Create new prescription</h1>
         <h1>{message}</h1>
@@ -228,10 +273,6 @@ const Page = () => {
           </button>
         </form>
 
-        <div>
-          <pre className="bg-gray-100 p-4 rounded-lg">{rawResponse}</pre>{" "}
-          {/* Display raw response */}
-        </div>
       </div>
 
       <div className="flex flex-col items-center justify-center h-screen space-y-6">
@@ -293,7 +334,7 @@ const Page = () => {
         </form>
 
         <div>
-          <pre className="bg-gray-100 p-4 rounded-lg">{rawResponse}</pre>{" "}
+          {/* <pre className="bg-gray-100 p-4 rounded-lg">{rawResponse}</pre>{" "} */}
           {/* Display raw response */}
         </div>
       </div>

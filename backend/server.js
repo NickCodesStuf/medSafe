@@ -184,10 +184,6 @@ const authenticateJWT = (req, res, next) => {
   }
 };
 
-app.get("/admin", authenticateJWT, authorizeAdmin, (req, res) => {
-  res.json({ message: "Access granted" });
-});
-
 // Initialize SQLite database (or create it if it doesn't exist)
 const db = new sqlite3.Database(path.resolve("./database.db"), (err) => {
   if (err) {
